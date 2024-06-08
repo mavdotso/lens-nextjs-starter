@@ -1,18 +1,12 @@
-import { profileId, useLogin, useProfilesManaged, Profile } from '@lens-protocol/react-web';
+import { profileId, useLogin, useProfilesManaged } from '@lens-protocol/react-web';
 import { Loading } from './loading';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 
-export type LoginAsProps = {
-    profile: Profile;
-    wallet: string;
-    onSuccess: (profile: Profile) => void;
-};
-
-export function LoginForm({ profile, wallet, onSuccess }: LoginAsProps) {
-    const { execute, loading: isLoginPending } = useLogin();
-    const { data: profiles, error, loading } = useProfilesManaged({ for: wallet, includeOwned: true });
+export function LoginForm({ owner, onSuccess }: { owner: string; onSuccess?: () => void }) {
+    const { execute: login, loading: isLoginPending } = useLogin();
+    const { data: profiles, error, loading } = useProfilesManaged({ for: owner, includeOwned: true });
 
     const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -22,15 +16,14 @@ export function LoginForm({ profile, wallet, onSuccess }: LoginAsProps) {
 
         const id = profileId(formData.get('id') as string);
 
-        const result = await execute({
-            address: wallet,
+        const result = await login({
+            address: owner,
             profileId: id,
         });
 
         if (result.isSuccess()) {
-            console.log(result);
             toast.success(`Welcome ${String(result.value?.handle?.fullHandle ?? result.value?.id)}`);
-            return onSuccess(profile);
+            return onSuccess?.();
         }
 
         toast.error(result.error.message);
