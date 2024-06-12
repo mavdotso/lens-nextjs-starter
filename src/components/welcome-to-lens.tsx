@@ -1,16 +1,16 @@
-import { SessionType, useSession as useLensSession } from '@lens-protocol/react-web';
-import { useAccount as useWagmiAccount } from 'wagmi';
+import { SessionType, useSession } from '@lens-protocol/react-web';
+import { useAccount } from 'wagmi';
 import { ConnectWalletButton } from './connect-wallet-button';
 import { truncateEthAddress } from '@/lib/utils';
-import { LoginForm } from './login-form';
 import { DisconnectWalletButton } from './disconnect-wallet-button';
 import { LogoutButton } from './logout-button';
+import { LoginOptions } from './login-options';
+import { ProfileCard } from './profile-card';
 
 export function WelcomeToLens() {
-    const { isConnected, address } = useWagmiAccount();
-    const { data: session } = useLensSession();
+    const { isConnected, address } = useAccount();
+    const { data: session } = useSession();
 
-    // step 1. connect wallet
     if (!isConnected) {
         return (
             <>
@@ -20,13 +20,11 @@ export function WelcomeToLens() {
         );
     }
 
-    // step 2. connect Lens Profile
     if (!session?.authenticated && address) {
         return (
             <>
                 <p className="mb-4 text-gray-500">Connected wallet: {truncateEthAddress(address)}</p>
-                <LoginForm owner={address} />
-
+                <LoginOptions wallet={address} />
                 <div className="mt-2">
                     <DisconnectWalletButton />
                 </div>
@@ -34,15 +32,12 @@ export function WelcomeToLens() {
         );
     }
 
-    // step 3. show Profile details
     if (session && session.type === SessionType.WithProfile) {
         return (
-            <>
-                <p className="mb-4 text-gray-500">
-                    You are logged in as <span className="text-gray-800 font-semibold">{session.profile.handle?.fullHandle ?? session.profile.id}</span>.
-                </p>
+            <div className="flex flex-col gap-4">
+                <ProfileCard profile={session.profile} />
                 <LogoutButton />
-            </>
+            </div>
         );
     }
 
